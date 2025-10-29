@@ -684,32 +684,32 @@ def ask_sig():
 
 def get_function_end(funk):
 	BBs = funk.getBody().toList()
-	max = 0
+	max_addr = 0
 	for BB in BBs:
-		bb_max = int(BB.getMaxAddress().toString(), 16)
-		if bb_max > max:
-			max = bb_max
-	return max
+		# Use getOffset() instead of parsing toString()
+		bb_max = BB.getMaxAddress().getOffset()
+		if bb_max > max_addr:
+			max_addr = bb_max
+	return max_addr
 
 rename_cnt = 0
 def funk_rename(addr, funk):
 	global rename_cnt
 	name = funk.name
 	if name != '?':
-		funk = getFunctionAt(parseAddress(hex(addr).strip('L')))
-		funk.setName(name, SourceType.USER_DEFINED)
-		rename_cnt += 1
+		funk_obj = getFunctionAt(toAddr(addr))
+		if funk_obj is not None:
+			funk_obj.setName(name, SourceType.USER_DEFINED)
+			rename_cnt += 1
 	return
 
 def apply_sig(flirt):
 	funk = getFirstFunction()
-	#print(funk.entryPoint
-	#print(get_function_end(funk))
 	while funk is not None:
-		funk_start = int(funk.entryPoint.toString(), 16)
+		# Use getOffset() instead of parsing toString()
+		funk_start = funk.entryPoint.getOffset()
 		funk_end   = get_function_end(funk)
-		funk_buf   = getBytes(parseAddress(hex(funk_start).strip('L')), funk_end - funk_start + 0x100)
-		#print('%x - %x' % (funk_start, funk_end))
+		funk_buf   = getBytes(funk.entryPoint, funk_end - funk_start + 0x100)
 		match_function(flirt, funk_buf, funk_start, funk_rename)
 		funk = getFunctionAfter(funk)
 
